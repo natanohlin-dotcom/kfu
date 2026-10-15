@@ -1,0 +1,38 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	// Egen entry som återexporterar OpenNexts fetch och lägger till scheduled() (cron)
+	"main": "./custom-worker.ts",
+	"name": "kfu",
+	"compatibility_date": "2026-10-15",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference service binding, the service name must match the worker name
+			// see https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "kfu"
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "kfu-db",
+			"database_id": "b310b90d-d9bb-44e2-b2d6-60b1416badc4",
+			"migrations_dir": "migrations"
+		}
+	],
+	"triggers": {
+		// 16:30 UTC = 18:30 svensk vintertid / 17:30 sommartid, efter Stockholmsbörsens stängning
+		"crons": ["30 16 * * 1-5"]
+	},
+	"observability": {
+		"enabled": true
+	}
+}
