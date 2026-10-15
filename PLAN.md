@@ -320,10 +320,10 @@ Python-skriptet behålls i `tools/python/` som referens.
 
 ## 10. Frontend och designsystem
 
-Enligt mall §9. Projektspecifikt:
+**Designriktningen står i `DESIGN.md` och gäller hela projektet:** Hedvig-inspirerat, kritvitt och stilrent, i KFU:s grafiska profil (Cormorant Garamond/Lato, #14213D, #1F4990, #FE9A04). Enligt mall §9. Projektspecifikt:
 - `components/ui/` byggs först: Button, Field, Select, Card, Table (sorterbar, tabulära siffror), Tabs, Dialog (`<dialog>`), Badge (status), EmptyState, Skeleton.
 - Talformat på ett ställe (`lib/format.ts`): `Intl.NumberFormat('sv-SE')`, procent med tecken, valutor, "mdr"/"mn".
-- Färgsemantik: `--color-up`, `--color-down`, `--color-accent`, serie-färger för grafer som tokens.
+- Färgsemantik och serie-färger enligt `DESIGN.md` §2.
 - Mörkt läge är valfritt, men tokens förbereds för det.
 - Sidor är server components som läser D1 direkt. Formulär, grafer, DCF och editor är klientkomponenter.
 
@@ -430,7 +430,22 @@ Rekommenderat upplägg: det nya kontot ägs av sektionen/utskottet, och Natan (o
 6. **Deploy:** `npm run deploy` och kontrollera den nya `*.workers.dev`-adressen (eller egen domän på det nya kontot). Koppla eventuellt Workers Builds till GitHub-repot från det nya kontot (Cloudflares GitHub-app måste få åtkomst till repot på Natans GitHub).
 7. **Städa gamla kontot** när det nya är verifierat: ta bort Workern `kfu` och D1 `kfu-db` på Natans personliga konto.
 
-## 16. Nästa steg
+## 16. Fas 1 – resultat (2026-10-15)
+
+Byggt och testat lokalt (`next dev` och `workerd` via `wrangler dev`). Inte deployat, eftersom det väntar på kontobytet (§15.1).
+
+- **Auth** enligt mall §7: `/api/auth/{login,logout,me,change-password}`, PBKDF2 (20 000 iterationer), JWT i httpOnly-cookie `kfu_session`, `ADMIN_KEYS` med roll (`Namn:användarnamn:roll:sha256`) och `scripts/admin-key.mjs` som skapar poster. Första inloggningen tvingar fram ett lösenordsbyte. Ett byte ogiltigförklarar andra sessioner (`pwc`). Det tillfälliga lösenordet slutar gälla när ett eget är valt.
+- **Spärr mot gissning** i D1 (`login_attempts`): 8 misslyckanden per användarnamn eller IP ger 15 minuters spärr.
+- **Behörighet** enligt Next 16:s rekommendation: ingen `proxy.ts` och ingen kontroll i layouter (de körs inte om vid navigering). `lib/auth/dal.ts` har `getSessionUser()` (cachad per anrop, läser alltid användaren från D1), `requireUser(permission)` för sidor och `requireApiUser(permission)` för routes.
+- **Roller:** `lib/auth/permissions.ts` med `can()`. Båda rollerna har samma rättigheter.
+- **Modulregister** `lib/modules.ts` styr menyn (moduler som inte är byggda visas som "Snart" med fas) och översiktens widgets.
+- **Designsystem:** reviderat efter Fas 1 till Hedvig-stil i KFU:s grafiska profil, se `DESIGN.md`. Tokens i `app/globals.css`, Lato + Cormorant Garamond, logotyp i `public/brand/`, `components/ui/` (Button, Field, Card, Badge, EmptyState, PageHeader), `lib/format.ts` (svensk tid/format).
+- **Sidor:** `/admin` (inloggning), `/admin/byt-losenord`, `/admin/oversikt` (hälsning, KPI-kort, platshållare för grafen och widgets), `/admin/installningar` (profil, byt lösenord). `/` leder till `/admin`.
+- **Tester:** `npm test` (Vitest, 10 tester för lösenord, ADMIN_KEYS, roller och modulregister) plus ett manuellt end-to-end-test av hela inloggningsflödet, sessionsogiltigförklaring och spärr.
+- Worker-storlek: 1,2 MiB gzip av 3 MiB.
+- **Hemligheter i produktion** när kontot är på plats: `AUTH_SECRET` (minst 32 tecken) och `ADMIN_KEYS`.
+
+## 17. Nästa steg
 
 1. Stäm av §7 (sidorna) och §14 (öppna frågor) i utskottet.
 2. Fas 0: sätt upp repot och kör Yahoo-spiken från Cloudflare. Svaret där avgör om datalagret blir som i §8 eller går via reserven.

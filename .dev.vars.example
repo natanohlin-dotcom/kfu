@@ -1,2 +1,6 @@
 NEXTJS_ENV=development
+# Valfri lång slumpsträng (minst 32 tecken): node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+AUTH_SECRET=
+# Poster från: node scripts/admin-key.mjs "Namn" användarnamn [admin|member]  (kommaseparerade)
+ADMIN_KEYS=
 SPIKE_SECRET=valfri-lokal-hemlighet

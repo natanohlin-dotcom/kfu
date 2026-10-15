@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb } from "@/lib/db";
+import { optionalEnv } from "@/lib/env";
 import { runYahooSpike } from "@/lib/market/spike";
 
 /**
@@ -9,7 +10,7 @@ import { runYahooSpike } from "@/lib/market/spike";
  * Skyddad med rubriken x-spike-secret. Tas bort när datalagret i fas 2 är på plats.
  */
 export async function GET(req: NextRequest) {
-  const secret = process.env.SPIKE_SECRET;
+  const secret = optionalEnv("SPIKE_SECRET");
   if (!secret) return NextResponse.json({ error: "SPIKE_SECRET saknas" }, { status: 500 });
   if (req.headers.get("x-spike-secret") !== secret) {
     return NextResponse.json({ error: "Obehörig" }, { status: 401 });

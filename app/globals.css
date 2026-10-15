@@ -1,26 +1,107 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Designtokens – se DESIGN.md. Hedvig-inspirerat: kritvitt, luftigt, stora rundningar,
+ * inga ramar eller skuggor som dekoration. Färger och typsnitt från KFU:s grafiska profil.
+ * Använd klasserna (bg-fill, text-ink-muted …), aldrig hårdkodade hex-värden i komponenter.
+ */
+@theme {
+  --font-sans: var(--font-lato), Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cormorant), "The Seasons", Georgia, serif;
+
+  /* Ytor */
+  --color-canvas: #fafafa;
+  --color-surface: #ffffff;
+  --color-fill: rgb(20 33 61 / 0.05);
+  --color-fill-hover: rgb(20 33 61 / 0.08);
+  --color-fill-strong: rgb(20 33 61 / 0.12);
+  --color-line: rgb(20 33 61 / 0.08);
+
+  /* Text – profilens mörka text */
+  --color-ink: #14213d;
+  --color-ink-muted: #646a7a;
+  --color-ink-subtle: #9a9fac;
+
+  /* Primärknapp */
+  --color-primary: #14213d;
+  --color-primary-hover: #0b1428;
+  --color-primary-ink: #ffffff;
+
+  /* Profilens blå och orange */
+  --color-accent: #1f4990;
+  --color-accent-soft: rgb(31 73 144 / 0.08);
+  --color-brand: #fe9a04;
+  --color-brand-soft: rgb(254 154 4 / 0.12);
+
+  /* Upp/ner och varning – bara för betydelse */
+  --color-up: #1e7b4a;
+  --color-up-soft: rgb(30 123 74 / 0.1);
+  --color-down: #c0362c;
+  --color-down-soft: rgb(192 54 44 / 0.08);
+  --color-warn: #9a5b00;
+  --color-warn-soft: rgb(254 154 4 / 0.14);
+
+  /* Dataserier i grafer (portföljen först) */
+  --color-series-1: #1f4990;
+  --color-series-2: #fe9a04;
+  --color-series-3: #2e8b7a;
+  --color-series-4: #8a6fd1;
+  --color-series-5: #9a9fac;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  /* Bara för det som svävar (menyer, dialoger, mobilmenyn) */
+  --shadow-pop: 0 12px 40px rgb(20 33 61 / 0.12), 0 2px 8px rgb(20 33 61 / 0.06);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: light;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-brand-soft);
+  }
+  /* 16 px i fält så att iOS inte zoomar */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  @media (min-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 0.9375rem;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Siffror som ska stå i kolumn (belopp, procent, kurser) */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
