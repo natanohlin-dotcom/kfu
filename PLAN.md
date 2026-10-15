@@ -416,7 +416,19 @@ Fas 4 och 5 är oberoende av varandra och kan byggas parallellt av olika persone
 - Cron-vägen är verifierad lokalt (`wrangler dev --test-scheduled`). I produktion körs den första gången 2026-10-16 16:30 UTC. Kontrollera med `GET /api/spike/yahoo?last=cron` (rubrik `x-spike-secret`).
 - `/api/spike/yahoo` och `SPIKE_SECRET` tas bort när fas 2 ersätter spiken.
 
-**Öppen fråga:** Workern och D1 ligger på Natans personliga Cloudflare-konto. Inför överlämning bör det flyttas till ett sektionskonto (nytt konto → `wrangler d1 export` / `import`, ny deploy).
+**Beslut:** Workern och D1 ligger tillfälligt på Natans personliga Cloudflare-konto och **flyttas till ett annat konto** som ska äga databas och deploy. GitHub-repot ligger kvar på Natans GitHub. Flytten görs **före fas 1**, medan D1 bara innehåller spikdata och inget behöver migreras. Se §15.1.
+
+### 15.1 Byte av Cloudflare-konto
+
+Rekommenderat upplägg: det nya kontot ägs av sektionen/utskottet, och Natan (och efterträdare) bjuds in som medlemmar (*Manage Account → Members*). Då kan var och en köra `wrangler` med sin egen inloggning, och kontot överlever personbyten.
+
+1. **Nytt konto:** bjud in Natan som medlem (Administrator eller Workers/D1-behörighet). Notera konto-id:t (Workers & Pages → höger kolumn).
+2. **Lås wrangler till kontot:** lägg till `"account_id": "<nytt konto-id>"` i `wrangler.jsonc`. Annars kan en användare med flera konton deploya till fel konto.
+3. **Ny databas:** `npx wrangler d1 create kfu-db` och byt `database_id` i `wrangler.jsonc`. Kör `npx wrangler d1 migrations apply kfu-db --remote`.
+4. **Data:** ingen behöver flyttas i dag (bara `app_state` med spik/crumb). Om det finns riktig data vid bytet: `npx wrangler d1 export kfu-db --remote --output=dump.sql` på gamla kontot, sedan `npx wrangler d1 execute kfu-db --remote --file=dump.sql` på nya (efter migreringarna, med bara `INSERT`-raderna).
+5. **Hemligheter:** sätt om alla med `npx wrangler secret put …` (i dag bara `SPIKE_SECRET`). Hemligheter följer inte med vid flytt.
+6. **Deploy:** `npm run deploy` och kontrollera den nya `*.workers.dev`-adressen (eller egen domän på det nya kontot). Koppla eventuellt Workers Builds till GitHub-repot från det nya kontot (Cloudflares GitHub-app måste få åtkomst till repot på Natans GitHub).
+7. **Städa gamla kontot** när det nya är verifierat: ta bort Workern `kfu` och D1 `kfu-db` på Natans personliga konto.
 
 ## 16. Nästa steg
 
