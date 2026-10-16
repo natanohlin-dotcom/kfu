@@ -83,3 +83,15 @@ export function parseNumber(input: string): number | null {
 export function signedSek(value: number, digits = 0): string {
   return new Intl.NumberFormat("sv-SE", { style: "currency", currency: "SEK", maximumFractionDigits: digits, minimumFractionDigits: digits, signDisplay: "exceptZero" }).format(value);
 }
+
+/** "för 5 minuter sedan", "i går", "för 3 dagar sedan" */
+export function relativeTime(iso: string, now = new Date()): string {
+  const rtf = new Intl.RelativeTimeFormat("sv-SE", { numeric: "auto" });
+  const sec = (Date.parse(iso) - now.getTime()) / 1000;
+  const abs = Math.abs(sec);
+  if (abs < 60) return "nyss";
+  if (abs < 3600) return rtf.format(Math.round(sec / 60), "minute");
+  if (abs < 86_400) return rtf.format(Math.round(sec / 3600), "hour");
+  if (abs < 30 * 86_400) return rtf.format(Math.round(sec / 86_400), "day");
+  return shortDate(iso);
+}

@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { Calculator, Eye, FileText } from "lucide-react";
+import { Calculator, FileText } from "lucide-react";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { AddBenchmarkButton } from "@/components/market/AddBenchmarkButton";
 import { AnalystCard } from "@/components/market/AnalystCard";
 import { StatSection, type Stat } from "@/components/market/StatSection";
+import { WatchPanel } from "@/components/watchlist/WatchPanel";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -27,6 +28,8 @@ import {
 } from "@/lib/market";
 import { isPeriod, PERIODS, periodReturn, slicePeriod, type PeriodId } from "@/lib/market/returns";
 import { findSecurityBySymbol } from "@/lib/securities";
+import { listActiveUsers } from "@/lib/users";
+import { getWatchItemBySymbol, listNotes } from "@/lib/watchlist/repo";
 
 export async function generateMetadata({ params }: PageProps<"/admin/bolag/[symbol]">): Promise<Metadata> {
   return { title: decodeURIComponent((await params).symbol).toUpperCase() };
@@ -56,13 +59,16 @@ export default async function SecurityPage({ params, searchParams }: PageProps<"
     return <Unavailable symbol={symbol} />;
   }
 
-  const [quotes, tracked, benchmarks, history, details] = await Promise.all([
+  const [quotes, tracked, benchmarks, history, details, watch, users] = await Promise.all([
     market.quotes([symbol]),
     findSecurityBySymbol(db, symbol),
     listBenchmarks(db),
     market.history(symbol, "5y").catch((): PriceHistory | null => null),
     market.details(symbol).catch((): CompanyDetails | null => null),
+    getWatchItemBySymbol(db, symbol),
+    listActiveUsers(),
   ]);
+  const notes = watch ? await listNotes(db, watch.id) : [];
 
   const q = quotes[0];
   const points = history?.points ?? [];
@@ -109,7 +115,8 @@ export default async function SecurityPage({ params, searchParams }: PageProps<"
           <span className="flex flex-wrap items-center gap-2">
             <span>{[profile.symbol, profile.exchange, KIND_LABELS[profile.kind]].filter(Boolean).join(" · ")}</span>
             {isBenchmark && <Badge tone="accent">Jämförelseindex</Badge>}
-            {tracked && !isBenchmark && <Badge>Följs</Badge>}
+            {watch && watch.status !== "arkiverad" && <Badge tone="accent">Bevakas</Badge>}
+            {tracked && !isBenchmark && !watch && <Badge>Följs</Badge>}
             {demo && <Badge tone="warn">Demodata</Badge>}
           </span>
         }
@@ -168,6 +175,19 @@ export default async function SecurityPage({ params, searchParams }: PageProps<"
           <StatSection title="Handel" stats={tradingStats} footer={<SourceNote demo={demo} />} />
         )}
       </div>
+
+      {profile.kind !== "fx" && can(user, "watchlist:read") && (
+        <WatchPanel
+          symbol={symbol}
+          name={profile.name}
+          currency={profile.currency}
+          currentPrice={q?.price ?? null}
+          item={watch}
+          notes={notes}
+          users={users}
+          canWrite={can(user, "watchlist:write")}
+        />
+      )}
 
       {!details && profile.kind === "stock" && (
         <Card tone="fill" className="mt-4 lg:mt-5">
@@ -241,8 +261,7 @@ export default async function SecurityPage({ params, searchParams }: PageProps<"
 
       {profile.kind === "stock" && (
       <Card tone="fill" className="mt-4 lg:mt-5" title="Kommer på bolagssidan">
-        <ul className="grid gap-3 text-sm sm:grid-cols-3">
-          <Upcoming icon={<Eye className="size-4" />} title="Bevakning" text="Tes, triggers och målkurs" phase={4} />
+        <ul className="grid gap-3 text-sm sm:grid-cols-2">
           <Upcoming icon={<Calculator className="size-4" />} title="DCF och räkenskaper" text="Historik, scenarier och känslighet" phase={5} />
           <Upcoming icon={<FileText className="size-4" />} title="Analyser" text="Utkast och färdiga rapporter" phase={6} />
         </ul>

@@ -66,7 +66,7 @@ export default async function OverviewPage() {
       {widgets.length > 0 && (
         <div className="mt-4 grid gap-4 md:grid-cols-2 lg:mt-5 lg:gap-5 xl:grid-cols-3">
           {widgets.map(({ widget, module }) => (
-            <DashboardWidget key={widget} widget={widget} module={module} />
+            <DashboardWidget key={widget} widget={widget} module={module} user={user} />
           ))}
         </div>
       )}

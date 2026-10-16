@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { logActivity } from "@/lib/activity";
 import { requireApiUser } from "@/lib/auth/dal";
 import { apiError } from "@/lib/api-server";
 import { isBenchmarkColor, listBenchmarks, nextColor } from "@/lib/benchmarks";
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
       .prepare("INSERT INTO benchmarks (security_id, label, color, is_default, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?)")
       .bind(security.id, label, color, existing.length === 0 ? 1 : 0, existing.length, new Date().toISOString())
       .run();
+    await logActivity(db, { userId: auth.user.id, action: "benchmark.added", entity: "benchmark", href: "/admin/installningar/jamforelseindex", summary: `Lade till jämförelseindex ${label}` });
     return NextResponse.json({ success: true, data: await listBenchmarks(db) }, { status: 201 });
   } catch (err) {
     return apiError(err, "Kunde inte lägga till jämförelseindex");

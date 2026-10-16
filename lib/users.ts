@@ -83,3 +83,11 @@ export async function setPassword(id: number, passwordHash: string): Promise<str
     .run();
   return now;
 }
+
+/** Aktiva användare för val av ansvarig (bara id och namn lämnar servern). */
+export async function listActiveUsers(): Promise<{ id: number; name: string }[]> {
+  const { results } = await getDb()
+    .prepare("SELECT id, display_name FROM users WHERE disabled_at IS NULL ORDER BY display_name")
+    .all<{ id: number; display_name: string }>();
+  return results.map((r) => ({ id: r.id, name: r.display_name }));
+}

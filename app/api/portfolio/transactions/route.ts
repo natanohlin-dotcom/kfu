@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 import { requireApiUser } from "@/lib/auth/dal";
 import { apiError } from "@/lib/api-server";
 import { getDb } from "@/lib/db";
 import { getMarket } from "@/lib/market";
 import { TransactionInput } from "@/lib/portfolio/input";
 import { addTransaction, listTransactions, TransactionError } from "@/lib/portfolio/repo";
+import { TYPE_LABELS } from "@/lib/portfolio/types";
 
 export async function GET() {
   const auth = await requireApiUser("portfolio:read");
@@ -29,6 +31,10 @@ export async function POST(req: Request) {
   try {
     const db = getDb();
     const tx = await addTransaction(db, getMarket(db), parsed.data, auth.user.id);
+    const what = tx.securityName
+      ? `${TYPE_LABELS[tx.type]} ${tx.quantity != null ? `${new Intl.NumberFormat("sv-SE").format(tx.quantity)} ` : ""}${tx.securityName}`
+      : `${TYPE_LABELS[tx.type]} ${new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 }).format(Math.abs(tx.cashSek))} kr`;
+    await logActivity(db, { userId: auth.user.id, action: "transaction.created", entity: "transaction", entityId: tx.id, href: "/admin/portfolj/transaktioner", summary: `${what} (${tx.tradeDate})` });
     return NextResponse.json({ success: true, data: tx }, { status: 201 });
   } catch (err) {
     if (err instanceof TransactionError) return NextResponse.json({ error: err.message, field: err.field }, { status: 400 });

@@ -504,7 +504,36 @@ Byggt och testat lokalt med demodata (`next dev` och `workerd`). Inte deployat, 
 - Värderingen räknas vid varje sidvisning (alla transaktioner × handelsdagar). För utskottets storlek tar det några millisekunder. Om CPU-gränsen (10 ms) någon gång nås i produktion: spara serien dagligen i en tabell `portfolio_daily` från cron och läs den i stället.
 - Lokal testdata från utvecklingen ligger bara i `.wrangler/` (lokal D1) och följer inte med till produktion.
 
-## 19. Nästa steg
+## 19. Fas 4 – resultat (2026-10-16)
+
+Byggt och testat lokalt med demodata (`next dev` och `workerd`). Inte deployat, eftersom det väntar på kontobytet (§15.1).
+
+- **Datamodell** (`0005_bevakningar.sql`):
+  - `watchlist_items`: en per värdepapper, med status, tes, triggers, målkurs i handelsvalutan och ansvarig.
+  - `watchlist_notes`: anteckningar i tidsordning.
+  - `activity_log`: färdig svensk text och länk per händelse.
+- **Statusar** (`lib/watchlist/status.ts`): Idé → Bevakning → Under analys → Beslut: köp / avstå, samt Arkiverad. Tavlan har fyra kolumner (besluten delar kolumn), och arkiverade visas i listan med "Visa arkiverade".
+- **Logik** `lib/watchlist/repo.ts`:
+  - Dubbletter nekas ("bevakas redan"). Arkiverade återupptas i stället för att skapas på nytt. Valutor kan inte bevakas.
+  - Varje ändring loggas i samma batch: skapad, status, tes, triggers, målkurs (före → efter) och anteckning.
+  - Transaktioner och nya jämförelseindex loggas också.
+- **API:** `GET/POST /api/watchlist`, `PATCH/DELETE /api/watchlist/[id]`, `GET/POST /api/watchlist/[id]/notes`, `GET /api/users` (id och namn för val av ansvarig).
+- **Bevakningssidan** `/admin/bevakningar`:
+  - Tavla och lista, filtret Alla/Mina, och valen sparas i URL:en.
+  - Kort och rader visar kurs, dagens rörelse, målkurs, avstånd till mål, ansvarig och senaste uppdatering.
+  - Status byts med en väljlista på kortet. Det är ett tillgängligt alternativ till dra och släpp, som går att lägga till senare.
+  - **Inled bevakning** är en dialog med sök, status, ansvarig, målkurs och tes. Därefter går man till bolagssidan.
+- **Bolagssidan:** panelen Bevakning har redigerbar tes och triggers, status, ansvarig, målkurs med uppsida eller "över målet", anteckningar, samt Avsluta (arkivera eller ta bort helt). Bolag som inte bevakas har knappen "Inled bevakning" (eller "Återuppta"). Märket "Bevakas" visas i rubriken.
+- **Översikten:** widgetarna har riktig data, nämligen *Bevakningar – störst rörelse idag* och *Senaste aktivitet*. Widgetordningen är fast (`WIDGET_ORDER` i `lib/modules.ts`).
+- **Nya grundkomponenter:** `TextArea`, `Select` (inbyggd select i fältstil) och `lib/format.relativeTime` ("för 5 minuter sedan").
+- **Tester:** 45 i Vitest (nya: tavlans statusar, avstånd till mål, validering och relativ tid).
+- Worker-storlek: 1,56 MiB gzip av 3 MiB.
+
+**Lärdomar:**
+- **`<dialog>.showModal()`** fokuserar första fokuserbara element (stängknappen). Reacts `autoFocus` sätter inget HTML-attribut, så fokus flyttas uttryckligen efter öppning.
+- **Turbopack-cachen** (mall §12.1) serverade gamla versioner av ändrade moduler ("is not a function"). Stoppa dev-servern, kör `rm -rf .next/dev` och starta igen.
+
+## 20. Nästa steg
 
 1. Stäm av §7 (sidorna) och §14 (öppna frågor) i utskottet.
 2. Fas 0: sätt upp repot och kör Yahoo-spiken från Cloudflare. Svaret där avgör om datalagret blir som i §8 eller går via reserven.
