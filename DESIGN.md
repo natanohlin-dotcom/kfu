@@ -28,7 +28,7 @@ Gäller **allt** i projektet: arbetsytan nu och den publika sajten senare. Läs 
 | `accent` / `accent-soft` | #1F4990 | Profilens blå: aktivt val, länkar, fokusring, portföljserien |
 | `brand` / `brand-soft` | #FE9A04 | Profilens orange: logga, små markörer, första jämförelseindex. **Aldrig som textfärg på ljus botten** (för låg kontrast). |
 | `up` / `down` / `warn` (+ `-soft`) | grönt / rött / brunorange | Kursrörelse, fel, varningar |
-| `series-1…5` | blå, orange, grönblå, lila, grå | Dataserier i grafer, i den ordningen |
+| `series-1…5` | #2b5aa6 blå, #db8400 orange, #11977a grönblå, #9065d6 lila, #cf4f84 rosa | Dataserier i grafer, i fast ordning (portföljen alltid `series-1`). Validerad med dataviz-validatorn: ljushetsband, mättnad och färgblindhetsseparation godkända. Orange har under 3:1 kontrast mot vitt, så grafer ska alltid ha förklaring, direktetiketter och en tabellvy. |
 
 Hårdkoda aldrig hex i komponenter, utan använd klasserna (`bg-fill`, `text-ink-muted` …).
 

@@ -42,12 +42,13 @@
   --color-warn: #9a5b00;
   --color-warn-soft: rgb(254 154 4 / 0.14);
 
-  /* Dataserier i grafer (portföljen först) */
-  --color-series-1: #1f4990;
-  --color-series-2: #fe9a04;
-  --color-series-3: #2e8b7a;
-  --color-series-4: #8a6fd1;
-  --color-series-5: #9a9fac;
+  /* Dataserier i grafer (portföljen först). Profilens blå/orange stegade så att paletten klarar
+     dataviz-validatorn (ljushetsband, mättnad, färgblindhet) – se DESIGN.md §2 */
+  --color-series-1: #2b5aa6;
+  --color-series-2: #db8400;
+  --color-series-3: #11977a;
+  --color-series-4: #9065d6;
+  --color-series-5: #cf4f84;
 
   --radius-sm: 10px;
   --radius-md: 16px;

@@ -38,8 +38,8 @@ export type ModuleDef = {
 
 export const MODULES: ModuleDef[] = [
   { id: "oversikt", label: "Översikt", href: "/admin/oversikt", icon: "layout-dashboard", group: "Start", permission: "dashboard:read", enabled: true, phase: 1 },
-  { id: "portfolj", label: "Innehav", href: "/admin/portfolj", icon: "briefcase", group: "Portfölj", permission: "portfolio:read", enabled: false, phase: 3 },
-  { id: "transaktioner", label: "Transaktioner", href: "/admin/portfolj/transaktioner", icon: "arrow-left-right", group: "Portfölj", permission: "portfolio:read", enabled: false, phase: 3 },
+  { id: "portfolj", label: "Innehav", href: "/admin/portfolj", icon: "briefcase", group: "Portfölj", permission: "portfolio:read", enabled: true, phase: 3 },
+  { id: "transaktioner", label: "Transaktioner", href: "/admin/portfolj/transaktioner", icon: "arrow-left-right", group: "Portfölj", permission: "portfolio:read", enabled: true, phase: 3 },
   { id: "bevakningar", label: "Bevakningar", href: "/admin/bevakningar", icon: "eye", group: "Arbete", permission: "watchlist:read", widgets: ["watchlist-movers"], enabled: false, phase: 4 },
   { id: "analyser", label: "Analyser", href: "/admin/analyser", icon: "file-text", group: "Arbete", permission: "analyses:read", widgets: ["active-analyses"], enabled: false, phase: 6 },
   { id: "dcf", label: "DCF-modell", href: "/admin/verktyg/dcf", icon: "calculator", group: "Verktyg", permission: "tools:use", enabled: false, phase: 5 },

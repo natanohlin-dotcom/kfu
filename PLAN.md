@@ -473,7 +473,38 @@ Byggt och testat lokalt (`next dev` och `workerd`). Inte deployat, eftersom det 
 - Yahoos ägardata omfattar främst institutioner som rapporterar till amerikanska SEC. Svenska ägarlistor (som Avanza visar från Holdings/Modular Finance) finns inte gratis och skulle kräva en betald källa. Sidan säger detta.
 - Bolagsbeskrivningen är på engelska.
 
-## 18. Nästa steg
+## 18. Fas 3 – resultat (2026-10-16)
+
+Byggt och testat lokalt med demodata (`next dev` och `workerd`). Inte deployat, eftersom det väntar på kontobytet (§15.1). Ingen CSV-import, eftersom det inte finns några befintliga innehav; allt registreras manuellt.
+
+- **Datamodell** (`0004_transaktioner.sql`): `transactions` är den enda källan till sanning. Innehav, kassa och avkastning räknas fram, inget lagras dubbelt. Kassapåverkan (`cash_sek`) och valutakurs räknas på servern.
+- **Bokföring** `lib/portfolio/ledger.ts` (rena funktioner, testade):
+  - Genomspelning i datumordning med **GAV-metoden** (courtage ingår i anskaffningsvärdet) ger realiserat resultat och utdelningar per innehav.
+  - **Validering mot hela historiken:** köp utan täckning, försäljning av mer än innehavet och borttagning som gör en senare affär omöjlig nekas med tydligt besked.
+  - **Daglig värdering i SEK** med valutaomräkning (DKKSEK=X …). Saknade kurser fylls framåt.
+  - **TWR** (tidsviktad avkastning): insättningar och uttag påverkar inte avkastningen.
+- **Formulär:** sex typer (insättning, köp, sälj, utdelning, uttag, avgift).
+  - Vid köp och sälj väljs värdepapper via sök, och valuta och aktuell kurs fylls i automatiskt.
+  - Valutakursen hämtas för affärsdagen ur kurshistoriken om den lämnas tom.
+  - Svenska tal ("1 234,56") fungerar, och index och valutor går inte att handla.
+- **API:** `GET/POST /api/portfolio/transactions`, `DELETE /api/portfolio/transactions/[id]` (`portfolio:write`).
+- **Sidor:**
+  - `/admin/portfolj` (Innehav): nyckeltal, innehavstabell (antal, GAV, kurs, idag, värde, andel, orealiserat), likvida medel, utvecklingsgraf, fördelning per sektor och kapitalsammanställning.
+  - `/admin/portfolj/transaktioner`: formulär och historik med borttagning.
+  - **Översikten** visar riktiga nyckeltal: portföljvärde, avkastning i år, mot standardindex i procentenheter över samma tidsspann, och likvida medel.
+- **Graf** `components/charts/PerformanceChart.tsx` (Recharts):
+  - Utveckling i procent från periodens start (1M–Max), en y-axel och tunna linjer.
+  - Hårkors med tooltip för alla serier, förklaring med periodens utveckling som direktetikett, och tabellvy.
+  - Portföljen räknas som TWR och index med utdelningsjusterade kurser.
+- **Seriefärger** omgjorda så att de klarar dataviz-validatorn (DESIGN.md §2): #2b5aa6, #db8400, #11977a, #9065d6, #cf4f84.
+- **Tester:** 39 i Vitest (nya: kassapåverkan, GAV, realiserat, validering, TWR med insättning mitt i perioden, valutaomräkning, helger).
+- Worker-storlek: 1,54 MiB gzip av 3 MiB. Recharts renderas även på servern.
+
+**Att hålla koll på:**
+- Värderingen räknas vid varje sidvisning (alla transaktioner × handelsdagar). För utskottets storlek tar det några millisekunder. Om CPU-gränsen (10 ms) någon gång nås i produktion: spara serien dagligen i en tabell `portfolio_daily` från cron och läs den i stället.
+- Lokal testdata från utvecklingen ligger bara i `.wrangler/` (lokal D1) och följer inte med till produktion.
+
+## 19. Nästa steg
 
 1. Stäm av §7 (sidorna) och §14 (öppna frågor) i utskottet.
 2. Fas 0: sätt upp repot och kör Yahoo-spiken från Cloudflare. Svaret där avgör om datalagret blir som i §8 eller går via reserven.

@@ -10,7 +10,7 @@ import type { AnalystEstimate, CompanyDetails, RecommendationCounts } from "@/li
 const SEGMENTS = [
   { key: "strongBuy", label: "Starkt köp", bar: "bg-up", dot: "bg-up" },
   { key: "buy", label: "Köp", bar: "bg-up/55", dot: "bg-up/55" },
-  { key: "hold", label: "Behåll", bar: "bg-series-5/70", dot: "bg-series-5/70" },
+  { key: "hold", label: "Behåll", bar: "bg-ink-subtle/60", dot: "bg-ink-subtle/60" },
   { key: "sell", label: "Sälj", bar: "bg-down/55", dot: "bg-down/55" },
   { key: "strongSell", label: "Starkt sälj", bar: "bg-down", dot: "bg-down" },
 ] as const;

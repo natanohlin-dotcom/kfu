@@ -6,7 +6,7 @@ export const BENCHMARK_COLORS = [
   { token: "series-2", label: "Orange", dot: "bg-series-2" },
   { token: "series-3", label: "Grönblå", dot: "bg-series-3" },
   { token: "series-4", label: "Lila", dot: "bg-series-4" },
-  { token: "series-5", label: "Grå", dot: "bg-series-5" },
+  { token: "series-5", label: "Rosa", dot: "bg-series-5" },
 ] as const;
 export type BenchmarkColor = (typeof BENCHMARK_COLORS)[number]["token"];
 

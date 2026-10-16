@@ -70,3 +70,16 @@ export function count(value: number | null | undefined): string | null {
   if (Math.abs(value) >= 1e6) return `${f(value / 1e6)} mn`;
   return new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 }).format(value);
 }
+
+/** Tolkar svenska tal från formulär: "1 234,56" → 1234.56. Tomt eller ogiltigt → null. */
+export function parseNumber(input: string): number | null {
+  const s = input.replace(/[\s  ]/g, "").replace(",", ".");
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Signerat belopp i kronor: 1234.5 → "+1 235 kr" */
+export function signedSek(value: number, digits = 0): string {
+  return new Intl.NumberFormat("sv-SE", { style: "currency", currency: "SEK", maximumFractionDigits: digits, minimumFractionDigits: digits, signDisplay: "exceptZero" }).format(value);
+}
