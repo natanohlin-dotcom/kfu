@@ -1,7 +1,7 @@
 /**
  * Tunn klient mot Yahoo Finance (inofficiellt API, samma ändpunkter som yfinance).
- * Fas 0: används av spiken för att se vad som fungerar från Cloudflare.
- * Fas 2: kapslas in bakom MarketDataProvider (PLAN.md §8).
+ * Används bara av yahoo-provider.ts; resten av appen går via MarketDataProvider (PLAN.md §8).
+ * Verifierat från Cloudflare i fas 0 (PLAN.md §15).
  */
 
 const UA =
@@ -135,11 +135,29 @@ const enc = encodeURIComponent;
 
 // ---------- Ändpunkter utan crumb ----------
 
+export type ChartMeta = {
+  currency: string;
+  symbol: string;
+  exchangeName: string;
+  fullExchangeName?: string;
+  instrumentType?: string;
+  longName?: string;
+  shortName?: string;
+  regularMarketPrice: number;
+  regularMarketTime?: number;
+  chartPreviousClose?: number;
+  previousClose?: number;
+  fiftyTwoWeekHigh?: number;
+  fiftyTwoWeekLow?: number;
+  /** Sekunder från UTC för börsens tidszon */
+  gmtoffset?: number;
+};
+
 export type ChartResponse = {
   chart: {
     result:
       | {
-          meta: { currency: string; symbol: string; regularMarketPrice: number; exchangeName: string };
+          meta: ChartMeta;
           timestamp?: number[];
           indicators: { quote: { close: (number | null)[] }[]; adjclose?: { adjclose: (number | null)[] }[] };
         }[]
@@ -154,7 +172,9 @@ export function chart(symbol: string, range = "1y", interval = "1d") {
   );
 }
 
-export type SearchResponse = { quotes: { symbol: string; shortname?: string; exchange?: string; quoteType?: string }[] };
+export type SearchResponse = {
+  quotes: { symbol: string; shortname?: string; longname?: string; exchange?: string; exchDisp?: string; quoteType?: string }[];
+};
 
 export function search(q: string) {
   return call<SearchResponse>(
@@ -164,8 +184,25 @@ export function search(q: string) {
 
 // ---------- Ändpunkter med crumb ----------
 
+export type YahooQuote = {
+  symbol: string;
+  longName?: string;
+  shortName?: string;
+  currency?: string;
+  regularMarketPrice?: number;
+  regularMarketPreviousClose?: number;
+  regularMarketChangePercent?: number;
+  regularMarketTime?: number;
+  marketCap?: number;
+  fiftyTwoWeekHigh?: number;
+  fiftyTwoWeekLow?: number;
+  quoteType?: string;
+  fullExchangeName?: string;
+  financialCurrency?: string;
+};
+
 export function quote(symbols: string[], s: YahooSession) {
-  return call<{ quoteResponse: { result: Record<string, unknown>[] } }>(
+  return call<{ quoteResponse: { result: YahooQuote[] } }>(
     `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${enc(symbols.join(","))}&crumb=${enc(s.crumb)}`,
     { Cookie: s.cookie },
   );

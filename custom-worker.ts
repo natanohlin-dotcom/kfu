@@ -3,17 +3,17 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- filen finns bara efter bygget
 // @ts-ignore `.open-next/worker.js` skapas vid bygget
 import { default as handler } from "./.open-next/worker.js";
-import { runYahooSpike } from "./lib/market/spike";
+import { getRawMarket, providerName } from "./lib/market";
+import { runDailyPriceUpdate } from "./lib/market/prices";
 
 export default {
   fetch: handler.fetch,
 
   async scheduled(_event, env, ctx) {
-    // Fas 0: kör Yahoo-spiken från cron för att se att även schemalagda anrop når Yahoo.
-    // Fas 2: ersätts av den dagliga uppdateringen av price_history.
+    // Daglig kursuppdatering efter Stockholmsbörsens stängning (PLAN.md §8)
     ctx.waitUntil(
-      runYahooSpike(env.DB, { symbol: "NOVO-B.CO", benchmark: "^OMX", trigger: "cron" }).then(
-        (r) => console.log(`Yahoo-spike (cron): ${r.allOk ? "alla OK" : "fel"}`, JSON.stringify(r.checks)),
+      runDailyPriceUpdate(env.DB, getRawMarket(env.DB, providerName((env as { MARKET_PROVIDER?: string }).MARKET_PROVIDER))).then((r) =>
+        console.log(`Kursuppdatering: ${r.updated.length} OK, ${r.failed.length} fel, ${r.remaining} kvar`, JSON.stringify(r.failed)),
       ),
     );
   },

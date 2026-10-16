@@ -1,11 +1,14 @@
 import { Card } from "@/components/ui/Card";
+import Link from "next/link";
 import { SegmentedPreview } from "@/components/ui/Segmented";
+import { colorDotClass, type Benchmark } from "@/lib/benchmarks";
+import { signedPercent } from "@/lib/format";
 
 /**
  * Platshållare för huvudgrafen "portfölj vs jämförelseindex" (byggs i fas 3).
  * Visar layouten: periodväljare, serier indexerade till 100 och förklaring.
  */
-export function PerformancePlaceholder() {
+export function PerformancePlaceholder({ benchmarks }: { benchmarks: Benchmark[] }) {
   return (
     <Card
       title="Portfölj mot jämförelseindex"
@@ -41,8 +44,15 @@ export function PerformancePlaceholder() {
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
         <span className="flex items-center gap-2 rounded-full bg-fill px-3 py-1 text-ink"><span className="size-2 rounded-full bg-series-1" /> Portföljen</span>
-        <span className="flex items-center gap-2 rounded-full bg-fill px-3 py-1 text-ink"><span className="size-2 rounded-full bg-series-2" /> OMXS30</span>
-        <span className="rounded-full px-3 py-1 text-ink-subtle">+ Lägg till index</span>
+        {benchmarks.map((b) => (
+          <span key={b.id} className="flex items-center gap-2 rounded-full bg-fill px-3 py-1 text-ink">
+            <span className={`size-2 rounded-full ${colorDotClass(b.color)}`} /> {b.label}
+            {b.ytd != null && <span className={`tabular ${b.ytd >= 0 ? "text-up" : "text-down"}`}>{signedPercent(b.ytd)} i år</span>}
+          </span>
+        ))}
+        <Link href="/admin/installningar/jamforelseindex" className="rounded-full px-3 py-1 text-ink-muted hover:bg-fill hover:text-ink">
+          + Lägg till index
+        </Link>
       </div>
     </Card>
   );

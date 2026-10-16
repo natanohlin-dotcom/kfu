@@ -3,21 +3,26 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { DashboardWidget } from "@/components/widgets/Widgets";
 import { PerformancePlaceholder } from "@/components/widgets/PerformancePlaceholder";
 import { requireUser } from "@/lib/auth/dal";
+import { listBenchmarks } from "@/lib/benchmarks";
+import { getDb } from "@/lib/db";
 import { greeting, longDate } from "@/lib/format";
 import { dashboardWidgetsFor } from "@/lib/modules";
 
 export const metadata: Metadata = { title: "Översikt" };
 
-const KPIS = [
-  { label: "Portföljvärde", hint: "SEK, senaste stängning" },
-  { label: "Avkastning i år", hint: "Tidsviktad" },
-  { label: "Mot OMXS30 i år", hint: "Procentenheter" },
-  { label: "Likvida medel", hint: "SEK" },
-];
 
 export default async function OverviewPage() {
   const user = await requireUser("dashboard:read");
   const widgets = dashboardWidgetsFor(user);
+  const benchmarks = await listBenchmarks(getDb());
+  const main = benchmarks.find((b) => b.isDefault) ?? benchmarks[0];
+  // Portföljens nyckeltal kopplas in i fas 3; jämförelsen använder standardindexet
+  const kpis = [
+    { label: "Portföljvärde", hint: "SEK, senaste stängning" },
+    { label: "Avkastning i år", hint: "Tidsviktad" },
+    { label: main ? `Mot ${main.label} i år` : "Mot index i år", hint: "Procentenheter" },
+    { label: "Likvida medel", hint: "SEK" },
+  ];
   const firstName = user.displayName.split(" ")[0];
 
   return (
@@ -25,7 +30,7 @@ export default async function OverviewPage() {
       <PageHeader title={`${greeting()}, ${firstName}`} description={longDate()} />
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:mb-5 lg:grid-cols-4 lg:gap-5">
-        {KPIS.map((k) => (
+        {kpis.map((k) => (
           <div key={k.label} className="rounded-lg bg-surface px-5 py-5 sm:px-6">
             <div className="text-sm text-ink-muted">{k.label}</div>
             <div className="tabular mt-3 text-[1.75rem] leading-none text-ink-subtle">–</div>
@@ -34,7 +39,7 @@ export default async function OverviewPage() {
         ))}
       </div>
 
-      <PerformancePlaceholder />
+      <PerformancePlaceholder benchmarks={benchmarks} />
 
       {widgets.length > 0 && (
         <div className="mt-4 grid gap-4 md:grid-cols-2 lg:mt-5 lg:gap-5 xl:grid-cols-3">

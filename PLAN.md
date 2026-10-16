@@ -281,6 +281,7 @@ Yahoo har inget officiellt API. Vi använder samma ändpunkter som `yfinance`:
 - **Cache i D1:** kurs 15 min, nyckeltal/finansiella rapporter 24 h, historik som dagliga rader i `price_history` (hämtar bara saknade dagar).
 - **Cookie/crumb** hämtas vid behov och sparas i `app_state`. Förnyas vid 401.
 - **Daglig cron** (efter Stockholmsbörsens stängning, ca 18:00 svensk tid) uppdaterar `price_history` för innehav, bevakningar, index och valutor. Den läggs i `custom-worker.ts`, som exporterar OpenNexts `fetch` plus en egen `scheduled()`. Reserv: GitHub Actions-cron som anropar `/api/cron/prices` med `CRON_SECRET`.
+- **Reservkällor:** utredda i `docs/datakallor.md` (EODHD, stooq, ECB m.fl.).
 - **Risk:** Yahoo kan strypa (429) eller blockera anrop från Cloudflares IP-adresser. Det **testas först av allt** (fas 0). Om det inte fungerar: en GitHub Actions-körning med befintlig Python/`yfinance` som skickar data till en skyddad import-endpoint (`/api/import/market`). Appen påverkas inte eftersom allt redan läses från D1-cachen.
 - Rapportvaluta vs handelsvaluta (som skriptet varnar för) hanteras explicit: `financialCurrency` och `currency` sparas och DCF-sidan räknar om med valutakursen.
 
@@ -445,7 +446,34 @@ Byggt och testat lokalt (`next dev` och `workerd` via `wrangler dev`). Inte depl
 - Worker-storlek: 1,2 MiB gzip av 3 MiB.
 - **Hemligheter i produktion** när kontot är på plats: `AUTH_SECRET` (minst 32 tecken) och `ADMIN_KEYS`.
 
-## 17. Nästa steg
+## 17. Fas 2 – resultat (2026-10-16)
+
+Byggt och testat lokalt (`next dev` och `workerd`). Inte deployat, eftersom det väntar på kontobytet (§15.1).
+
+- **Datamodell** (`0003_marknadsdata.sql`): `securities`, `price_history` (daglig stängning + justerad kurs, PK `(security_id, date)`), `benchmarks` (OMXS30 förvalt som standard). `market_cache` från fas 0 används för Yahoo-svar.
+- **Provider-gränssnitt** `lib/market/types.ts` (`search`, `quotes`, `history`, `profile`, `details`). `lib/market/index.ts` väljer källa, och ingen annan kod känner till Yahoo:
+  - `yahoo-provider.ts` + `yahoo-details.ts`: kurs och profil via chart (kräver ingen crumb), med quote/quoteSummary när de svarar.
+  - `demo-provider.ts`: påhittade men deterministiska kurser och nyckeltal för lokal utveckling (`MARKET_PROVIDER=demo`). Gränssnittet visar "Demodata" i menyn och på bolagssidan.
+  - `cache.ts`: D1-cache per källa (sök 24 h, kurs 15 min, historik och nyckeltal 6 h, profil 7 d). Vid fel från källan används utgångna värden hellre än inget.
+- **Kurssynk** `lib/market/prices.ts`: ett nytt värdepapper får tio års historik; därefter hämtas bara dagarna sedan senaste kurs (minsta Yahoo-intervall). Daglig cron (`custom-worker.ts`) tar högst 40 värdepapper per körning, äldst synkade först, eftersom gratisnivån tillåter 50 utgående anrop. Värdepapper i utländsk valuta får automatiskt sin valutakurs mot SEK (`DKKSEK=X` …), vilket behövs för fas 3.
+- **API:** `/api/securities/search`, `/api/market/quotes`, `/api/market/refresh` (GET senaste körning, POST kör nu), `/api/benchmarks` (GET/POST) och `/api/benchmarks/[id]` (PATCH namn/färg/standard, DELETE).
+- **UI:**
+  - ⌘K/Ctrl+K-sök (även knapp i menyn och sökikon på mobil) leder till bolagssidan.
+  - **Bolagssidan** `/admin/bolag/[symbol]` i Avanzas omfattning: kurs, graf med perioder (1 v–5 år), avkastningsrad, nyckeltal (börsvärde, P/E, P/E framåt, P/S, P/EK, EV/EBITDA, EV/S, PEG, direktavkastning, vinst/aktie, beta), handel, lönsamhet och tillväxt, finansiell ställning, utdelning, aktien och kalender (nästa rapport, antal aktier inkl. alla aktieslag), ägare och om bolaget. **Analytiker** som Avanza: rekommendation, fördelning starkt köp/köp/behåll/sälj/starkt sälj med trend för fyra månader (`recommendationTrend`), riktkursintervall med dagens kurs inprickad och uppsida, samt vinst- och omsättningsestimat för innevarande och nästa kvartal och år (`earningsTrend`). Sektioner utan data döljs, och för index tar handelsdatan nyckeltalens plats.
+  - Inställningar har flikarna Konto och **Jämförelseindex** (lägg till via sök, byt namn och färg, standardindex, ta bort, kör kursuppdatering).
+  - Översiktens förklaring visar de riktiga indexen med avkastning i år.
+- **Robusthet:** cachenycklarna är versionerade (`CACHE_VERSION` i `lib/market/cache.ts`; höj vid formatändring), och `app/admin/(app)/error.tsx` visar en felsida med menyn kvar.
+- **Alternativa datakällor:** se `docs/datakallor.md`. Slutsatsen: behåll Yahoo, med EODHD (studentrabatt) som betald reserv och stooq/ECB som gratis nödreserv för kurser. Svenska ägarlistor finns inte gratis, så de matas förslagsvis in manuellt.
+- **Tester:** 32 i Vitest (Yahoo-normalisering med fixtur i quoteSummary-format, analytikertrend och estimat, tidszoner, periodavkastning, synkintervall, symbolvalidering, demodata, färger).
+- Worker-storlek: 1,35 MiB gzip av 3 MiB.
+
+**Inte verifierat mot riktig Yahoo:** universitetsnätet (130.243.x.x) får 429 från alla Yahoo-ändpunkter sedan 2026-10-16. Det gäller även med cookie, så det är en spärr på nätet och inte i koden. Fas 0 visade att Yahoo svarar från Cloudflare. **Kör en kontroll** efter deploy eller från ett annat nät: sätt `MARKET_PROVIDER` till något annat än `demo` (eller ta bort raden), töm lokal cache (`DELETE FROM market_cache; DELETE FROM price_history;`) och öppna några bolagssidor. Kontrollera särskilt fälten i `yahoo-details.ts` mot riktiga svar.
+
+**Kända begränsningar i källan:**
+- Yahoos ägardata omfattar främst institutioner som rapporterar till amerikanska SEC. Svenska ägarlistor (som Avanza visar från Holdings/Modular Finance) finns inte gratis och skulle kräva en betald källa. Sidan säger detta.
+- Bolagsbeskrivningen är på engelska.
+
+## 18. Nästa steg
 
 1. Stäm av §7 (sidorna) och §14 (öppna frågor) i utskottet.
 2. Fas 0: sätt upp repot och kör Yahoo-spiken från Cloudflare. Svaret där avgör om datalagret blir som i §8 eller går via reserven.

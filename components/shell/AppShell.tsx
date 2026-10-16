@@ -3,16 +3,24 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, Search, X } from "lucide-react";
+import { CommandPalette } from "@/components/market/CommandPalette";
 import { GROUP_ORDER, type NavModule } from "@/lib/modules";
 import type { PublicUser } from "@/lib/users";
 import { ROLE_LABELS } from "@/lib/auth/permissions";
 import { Brand } from "./Brand";
 import { ICONS } from "./icons";
 
-type Props = { user: PublicUser; modules: NavModule[]; children: ReactNode };
+type Props = {
+  user: PublicUser;
+  modules: NavModule[];
+  /** true när marknadsdatan kommer från demoleverantören (MARKET_PROVIDER=demo) */
+  demoData?: boolean;
+  children: ReactNode;
+};
 
-export function AppShell({ user, modules, children }: Props) {
+export function AppShell({ user, modules, demoData = false, children }: Props) {
+  const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
   // Menyn är öppen för den sida den öppnades på, så den stängs av sig själv vid sidbyte
   const [openAt, setOpenAt] = useState<string | null>(null);
@@ -46,7 +54,23 @@ export function AppShell({ user, modules, children }: Props) {
             <X className="size-5" />
           </button>
         </div>
+        <div className="px-3 pb-3">
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="flex min-h-10 w-full items-center gap-3 rounded-sm bg-fill px-3 text-ink-muted transition-colors hover:bg-fill-hover hover:text-ink"
+          >
+            <Search className="size-4" aria-hidden />
+            <span className="flex-1 text-left">Sök</span>
+            <kbd className="rounded-[6px] bg-surface px-1.5 py-0.5 font-sans text-[0.6875rem] text-ink-subtle">⌘K</kbd>
+          </button>
+        </div>
         <Nav modules={modules} pathname={pathname} />
+        {demoData && (
+          <p className="mx-3 mb-1 rounded-sm bg-warn-soft px-3 py-2 text-xs text-warn" title="MARKET_PROVIDER=demo">
+            Demodata: kurserna är påhittade (lokal utveckling)
+          </p>
+        )}
         <UserBox user={user} />
       </aside>
 
@@ -62,7 +86,16 @@ export function AppShell({ user, modules, children }: Props) {
           <Menu className="size-5" />
         </button>
         <Brand />
+        <button
+          type="button"
+          className="-mr-1 ml-auto rounded-sm p-2 text-ink hover:bg-fill"
+          onClick={() => setSearchOpen(true)}
+          aria-label="Sök värdepapper"
+        >
+          <Search className="size-5" />
+        </button>
       </header>
+      <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
 
       <main className="mx-auto w-full max-w-7xl px-4 pt-4 pb-12 sm:px-6 lg:px-12 lg:pt-12">{children}</main>
     </div>

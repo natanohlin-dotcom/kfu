@@ -3,4 +3,5 @@ NEXTJS_ENV=development
 AUTH_SECRET=
 # Poster från: node scripts/admin-key.mjs "Namn" användarnamn [admin|member]  (kommaseparerade)
 ADMIN_KEYS=
-SPIKE_SECRET=valfri-lokal-hemlighet
+# "demo" = påhittade kurser lokalt (om Yahoo inte nås från ditt nät). Utelämna för Yahoo.
+MARKET_PROVIDER=demo

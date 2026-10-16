@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
 import { getSessionUser } from "@/lib/auth/dal";
+import { providerName } from "@/lib/market";
 import { navModulesFor } from "@/lib/modules";
 
 /**
@@ -13,7 +14,7 @@ export default async function AppLayout({ children }: LayoutProps<"/admin">) {
   if (user.mustChange) redirect("/admin/byt-losenord");
 
   return (
-    <AppShell user={user} modules={navModulesFor(user)}>
+    <AppShell user={user} modules={navModulesFor(user)} demoData={providerName() === "demo"}>
       {children}
     </AppShell>
   );

@@ -6,7 +6,7 @@ Next.js 16 + OpenNext på Cloudflare Workers med D1. Plan, beslut och faser: [PL
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars          # fyll i AUTH_SECRET och ADMIN_KEYS
+cp .dev.vars.example .dev.vars          # fyll i AUTH_SECRET och ADMIN_KEYS (MARKET_PROVIDER=demo = påhittade kurser)
 npx wrangler d1 migrations apply kfu-db --local
 npm run dev                             # http://localhost:3000 → /admin
 ```
